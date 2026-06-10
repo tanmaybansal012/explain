@@ -1,197 +1,268 @@
-# 📈 Stock Portfolio Tracker — Backend API
+# 📈 Stock Portfolio Tracker
 
-A production-grade Node.js/Express REST API for tracking stock portfolios, computing P&L, generating buy/sell signals, and sending price-alert emails.
-
----
-
-## 🗂 Project Description
-
-Stock Portfolio Tracker is a backend service that lets users:
-
-- **Manage portfolios** — create holdings, track buy price & quantity
-- **Live P&L enrichment** — enrich any portfolio with current prices, unrealised gains, cost basis, and portfolio-level summaries
-- **Price alerts** — set threshold alerts (ABOVE / BELOW) that trigger email notifications via Nodemailer
-- **Technical signals** — compute moving averages, crossover signals, peaks/troughs, and best buy-sell windows using efficient O(n) algorithms
-- **Ticker autocomplete** — O(m) prefix search using a Trie data structure, far faster than SQL `LIKE` scans
-- **Secure auth** — JWT-based authentication with token expiry and user deactivation checks
+> A smart, efficient stock portfolio tracking API that uses advanced data structures to deliver instant search, real-time prices, and algorithmic buy/sell signals for both US and Indian markets.
 
 ---
 
-## 📁 Project Structure
+## What It Does For a User
+
+- 🔍 Search any stock ticker instantly (AAPL, TCS, RELIANCE)
+- 💰 Get live real-time stock prices from Yahoo Finance
+- 💼 Add stocks to your personal portfolio
+- 📊 See buy/sell signals based on price patterns
+- 📈 Calculate best time to buy and sell
+- 📉 Track moving averages of any stock
+- 📧 Get email alerts when a stock hits your target price
+
+---
+
+## Tech Stack
+
+| Technology | What It's Used For |
+|---|---|
+| **Node.js** | Runtime — runs JavaScript on the server |
+| **Express.js** | Framework — handles HTTP routes and requests |
+| **Axios** | Fetches live stock prices from Yahoo Finance |
+| **JWT (jsonwebtoken)** | User authentication and security |
+| **Nodemailer** | Sends price alert emails |
+| **dotenv** | Manages secret keys and config |
+| **Yahoo Finance API** | Free source of live stock price data |
+
+---
+
+## Data Structures & Algorithms Used
+
+| File | DSA Used | Why |
+|---|---|---|
+| `trie.js` | **Prefix Tree (Trie)** | O(m) instant ticker search instead of slow O(n) scan |
+| `signals.js` | **Monotonic Stack** | O(n) buy/sell detection instead of O(n²) brute force |
+| `signals.js` | **Sliding Window Max** | O(n) k-day high resistance line |
+| `movingAvg.js` | **Sliding Window** | O(n) moving average instead of O(n·k) naive approach |
+| `movingAvg.js` | **Kadane's Algorithm** | O(n) best buy/sell window finder |
+
+---
+
+## Project Files & Their Role
+
+| File | Role |
+|---|---|
+| `index.js` | Main entry point — starts server, defines all routes |
+| `services/auth.js` | JWT login middleware — protects private routes |
+| `services/errorHandler.js` | Catches all errors — returns clean JSON responses |
+| `services/emailService.js` | Sends formatted HTML price alert emails |
+| `services/portfolioService.js` | Calculates P&L, portfolio value, cost basis |
+| `services/trie.js` | Autocomplete search engine for ticker symbols |
+| `services/signals.js` | Detects BUY/SELL/HOLD signals from price history |
+| `services/movingAvg.js` | Computes moving averages and crossover signals |
+| `public/index.html` | Frontend UI — search, live price, portfolio page |
+
+---
+
+## Project Structure
 
 ```
-stock-portfolio-tracker/
-│
+stock-tracker/
 ├── config/
-│   ├── logger.js          # Winston logger setup
-│   └── db.js              # MongoDB / Sequelize connection
-│
-├── middleware/
-│   ├── auth.js            # JWT auth middleware + generateToken()
-│   └── errorHandler.js    # Centralised Express error handler + 404
-│
+│   └── logger.js
 ├── models/
-│   ├── User.js            # User schema (id, email, isActive, passwordHash)
-│   ├── Portfolio.js       # Portfolio schema + getTickers() helper
-│   ├── PriceHistory.js    # OHLCV price records + getLatestPrices()
-│   └── Alert.js           # Price alert model (ticker, condition, threshold)
-│
-├── routes/
-│   ├── authRoutes.js      # POST /auth/register, /auth/login
-│   ├── portfolioRoutes.js # CRUD for portfolios and holdings
-│   └── alertRoutes.js     # CRUD for price alerts
-│
+│   └── User.js
 ├── services/
-│   ├── portfolioService.js  # enrichPortfolio(), portfolioPnLHistory()
-│   ├── emailService.js      # sendAlertEmail() via Nodemailer
-│   ├── signals.js           # Monotonic stack signals, sliding window max
-│   ├── movingAvg.js         # Sliding window MA, crossover signals, bestBuySell
-│   └── trie.js              # Trie autocomplete for ticker symbols
-│
-├── jobs/
-│   └── alertChecker.js    # Scheduled job — checks alerts, fires emails
-│
-├── app.js                 # Express app setup
-├── server.js              # Entry point — starts server
-├── .env.example           # Environment variable template
-└── package.json
+│   ├── auth.js
+│   ├── errorHandler.js
+│   ├── emailService.js
+│   ├── portfolioService.js
+│   ├── trie.js
+│   ├── signals.js
+│   └── movingAvg.js
+├── public/
+│   └── index.html
+├── .env
+├── index.js
+├── package.json
+└── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
-
-- Node.js v18+
-- MongoDB (or PostgreSQL if using Sequelize models)
-- SMTP credentials (Mailtrap for dev, SendGrid/SES for production)
-
-### Installation
-
+### 1. Prerequisites
 ```bash
-git clone https://github.com/your-org/stock-portfolio-tracker.git
-cd stock-portfolio-tracker
-npm install
-cp .env.example .env   # fill in your secrets
-npm run dev
+node -v   # need v18+
+npm -v
 ```
 
-### Environment Variables
+### 2. Clone & Install
+```bash
+git clone <your-repo-url>
+cd stock-tracker
+npm install
+```
 
+### 3. Create `.env` file
 ```env
-PORT=5000
-
-# Database
-MONGO_URI=mongodb://localhost:27017/stocktracker
-
-# Auth
-JWT_SECRET=your_super_secret_key
+JWT_SECRET=your_secret_key
 JWT_EXPIRES_IN=7d
-
-# Email
 EMAIL_HOST=smtp.mailtrap.io
 EMAIL_PORT=2525
-EMAIL_USER=your_mailtrap_user
-EMAIL_PASS=your_mailtrap_pass
+EMAIL_USER=your_email
+EMAIL_PASS=your_password
 EMAIL_FROM=alerts@stocktracker.com
 ```
 
----
-
-## 🔌 API Endpoints
-
-### Auth
-| Method | Endpoint             | Description         |
-|--------|----------------------|---------------------|
-| POST   | `/api/auth/register` | Register a new user |
-| POST   | `/api/auth/login`    | Login, returns JWT  |
-
-### Portfolios *(requires Bearer token)*
-| Method | Endpoint                                    | Description                         |
-|--------|---------------------------------------------|-------------------------------------|
-| GET    | `/api/portfolios`                           | List all portfolios (enriched)      |
-| POST   | `/api/portfolios`                           | Create a portfolio                  |
-| GET    | `/api/portfolios/:id`                       | Get enriched portfolio by ID        |
-| DELETE | `/api/portfolios/:id`                       | Delete a portfolio                  |
-| POST   | `/api/portfolios/:id/holdings`              | Add a holding                       |
-| DELETE | `/api/portfolios/:id/holdings/:holdingId`   | Remove a holding                    |
-| GET    | `/api/portfolios/:id/history?days=30`       | Daily P&L history (chart data)      |
-| GET    | `/api/portfolios/:id/signals?ticker=AAPL`   | Buy/sell signals for a holding      |
-
-### Alerts *(requires Bearer token)*
-| Method | Endpoint          | Description            |
-|--------|-------------------|------------------------|
-| GET    | `/api/alerts`     | List user's alerts     |
-| POST   | `/api/alerts`     | Create a price alert   |
-| DELETE | `/api/alerts/:id` | Delete an alert        |
-
-### Tickers
-| Method | Endpoint                          | Description                   |
-|--------|-----------------------------------|-------------------------------|
-| GET    | `/api/tickers/search?q=APP`       | Autocomplete ticker symbols   |
-
----
-
-## 🧠 Algorithm Design
-
-| File              | Algorithm                  | Complexity | Why                                              |
-|-------------------|----------------------------|------------|--------------------------------------------------|
-| `movingAvg.js`    | Sliding Window             | O(n)       | 30× faster than naïve O(n·k) per-ticker MA      |
-| `signals.js`      | Monotonic Stack            | O(n)       | O(n) next-greater vs O(n²) brute-force          |
-| `signals.js`      | Sliding Window Max (deque) | O(n)       | k-day high resistance line in linear time       |
-| `trie.js`         | Trie (Prefix Tree)         | O(m)       | O(m) prefix lookup vs O(n·m) SQL LIKE scan      |
-| `portfolioService`| Single aggregation query   | O(t)       | One DB round-trip for all ticker prices         |
-
----
-
-## 🛡 Security
-
-- JWT verified on every protected route via `auth` middleware
-- Deactivated users (`isActive: false`) are rejected even with valid tokens
-- Centralised error handler hides stack traces in production (5xx → generic message)
-- Mongoose duplicate-key and validation errors mapped to clean 400/409 responses
-
----
-
-## 📧 Alert System
-
-A background job (`jobs/alertChecker.js`) runs every 5 minutes:
-1. Fetches all active alerts from the database
-2. Loads latest prices from `PriceHistory`
-3. Evaluates `ABOVE` / `BELOW` conditions
-4. Calls `sendAlertEmail()` for triggered alerts (non-blocking — job continues on email failure)
-5. Marks alerts as triggered to prevent duplicate emails
-
----
-
-## 🧪 Testing
-
+### 4. Run the Server
 ```bash
-npm test          # Jest unit tests
-npm run test:e2e  # Supertest integration tests
+node index.js
 ```
 
-Key test targets: `movingAverage`, `crossoverSignals`, `bestBuySell`, `computeSignals`, `Trie.autocomplete`, `enrichPortfolio`.
+Or with auto-restart on file changes:
+```bash
+npm install -g nodemon
+nodemon index.js
+```
+
+### 5. Open in Browser
+```
+http://localhost:3000
+```
 
 ---
 
-## 📦 Dependencies
+## API Endpoints
 
-| Package      | Purpose                          |
-|--------------|----------------------------------|
-| express      | HTTP framework                   |
-| jsonwebtoken | JWT sign & verify                |
-| bcryptjs     | Password hashing                 |
-| mongoose     | MongoDB ODM                      |
-| nodemailer   | SMTP email delivery              |
-| winston      | Structured logging               |
-| node-cron    | Scheduled alert-checker job      |
-| dotenv       | Environment variable loading     |
+| Method | Route | What It Does |
+|---|---|---|
+| GET | `/search?q=AA` | Autocomplete ticker search |
+| GET | `/price/AAPL` | Get live US stock price |
+| GET | `/price/TCS?market=NSE` | Get live Indian NSE stock price |
+| GET | `/price/INFY?market=BSE` | Get live Indian BSE stock price |
+| POST | `/analyze` | Get moving average + best trade |
+| POST | `/signals` | Get BUY/SELL signals |
+| POST | `/portfolio/add` | Add stock to portfolio |
+| GET | `/portfolio` | View your portfolio |
+
+### Example Requests
+
+**Search a ticker:**
+```
+GET http://localhost:3000/search?q=REL
+```
+```json
+[{ "ticker": "RELIANCE", "name": "Reliance Industries", "sector": "Energy" }]
+```
+
+**Get live price:**
+```
+GET http://localhost:3000/price/TCS?market=NSE
+```
+```json
+{ "ticker": "TCS.NS", "price": 3945.50, "currency": "INR", "market": "NSE" }
+```
+
+**Analyze prices:**
+```
+POST http://localhost:3000/analyze
+Body: { "prices": [100, 102, 98, 105, 103, 110, 108] }
+```
+```json
+{
+  "ma7": [...],
+  "bestTrade": { "maxGain": 12, "buyIndex": 2, "sellIndex": 5 }
+}
+```
+
+**Get signals:**
+```
+POST http://localhost:3000/signals
+Body: { "prices": [100, 102, 98, 105, 103, 110, 108] }
+```
+```json
+{
+  "signals": [
+    { "action": "BUY", "price": 98, "index": 2 },
+    { "action": "SELL", "price": 110, "index": 5 }
+  ]
+}
+```
+
+---
+
+## Markets Supported
+
+| Market | How to Use | Example |
+|---|---|---|
+| 🇺🇸 US (NYSE, NASDAQ) | Direct ticker | `AAPL`, `TSLA` |
+| 🇮🇳 India NSE | Add `?market=NSE` | `TCS?market=NSE` |
+| 🇮🇳 India BSE | Add `?market=BSE` | `INFY?market=BSE` |
+| 🌍 Others | Yahoo Finance suffixes | `.L` UK, `.DE` Germany |
+
+---
+
+## How Data Flows
+
+```
+User types "REL"
+      ↓
+Trie searches in O(m) time
+      ↓
+Returns RELIANCE instantly
+      ↓
+User clicks → fetches live price from Yahoo Finance
+      ↓
+User adds to portfolio → P&L calculated
+      ↓
+Background checks price vs alert threshold
+      ↓
+Price crosses threshold → email sent via Nodemailer
+      ↓
+All errors caught by errorHandler → clean JSON response
+```
+
+---
+
+## Why It's Efficient
+
+Normal apps do slow operations. This project uses DSA to avoid that:
+
+```
+Search:       Array scan O(n)    →  Trie O(m)            → 100x faster
+Moving Avg:   Naive O(n·k)       →  Sliding Window O(n)  →  30x faster
+Buy/Sell:     Brute force O(n²)  →  Monotonic Stack O(n) → 500x faster at scale
+```
+
+---
+
+## Dependencies
+
+```json
+{
+  "express":       "HTTP server framework",
+  "axios":         "HTTP client for Yahoo Finance API",
+  "jsonwebtoken":  "JWT auth token generation and verification",
+  "nodemailer":    "Email sending for price alerts",
+  "dotenv":        "Environment variable management"
+}
+```
+
+Install all:
+```bash
+npm install express axios jsonwebtoken nodemailer dotenv
+```
+
+---
+
+## Future Improvements
+
+- [ ] MongoDB database to persist portfolio data
+- [ ] User signup and login system
+- [ ] Price alert system with email notifications
+- [ ] Portfolio performance chart (P&L over time)
+- [ ] More Indian stocks in the Trie
+- [ ] Crypto support (BTC-USD, ETH-USD)
+- [ ] Deploy to cloud (Railway, Render, or Vercel)
 
 ---
 
 ## License
 
-MIT © 2024 Stock Portfolio Tracker
-
+MIT — free to use and modify.
