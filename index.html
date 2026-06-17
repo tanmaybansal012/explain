@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock Tracker</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #0f0f0f; color: white; }
+    h1 { color: #1D9E75; }
+    h2 { color: #aaa; font-size: 16px; margin-top: 30px; }
+    input { padding: 10px; width: 300px; font-size: 16px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 6px; }
+    button { padding: 10px 20px; background: #1D9E75; color: white; border: none; cursor: pointer; border-radius: 6px; margin-left: 8px; }
+    .card { background: #1a1a1a; padding: 15px; margin: 8px 0; border-radius: 8px; border-left: 3px solid #1D9E75; }
+    .sell { border-left-color: #E24B4A; }
+    .buy  { border-left-color: #1D9E75; }
+  </style>
+</head>
+<body>
+
+  <h1>📈 My Stock Tracker</h1>
+
+  <!-- Search -->
+  <h2>🔍 Search Ticker</h2>
+  <input id="searchInput" placeholder="Type e.g. AA, MS, GO" oninput="search()"/>
+  <div id="searchResults"></div>
+
+  <!-- Live Price -->
+  <h2>💰 Live Price</h2>
+  <input id="priceInput" placeholder="e.g. AAPL"/>
+  <button onclick="getPrice()">Get Price</button>
+  <div id="priceResult"></div>
+
+  <!-- Portfolio -->
+  <h2>💼 My Portfolio</h2>
+  <input id="tickerInput" placeholder="Ticker e.g. AAPL"/>
+  <input id="qtyInput" placeholder="Quantity e.g. 10" style="width:150px; margin-left:8px"/>
+  <input id="priceAdd" placeholder="Buy price e.g. 150" style="width:150px; margin-left:8px"/>
+  <button onclick="addStock()">Add Stock</button>
+  <div id="portfolioResult"></div>
+
+  <script>
+    // Search
+    async function search() {
+      const q = document.getElementById('searchInput').value;
+      if (!q) return document.getElementById('searchResults').innerHTML = '';
+      const res  = await fetch(`/search?q=${q}`);
+      const data = await res.json();
+      document.getElementById('searchResults').innerHTML =
+        data.map(d => `<div class="card">${d.ticker} — ${d.name} (${d.sector})</div>`).join('') || '<div class="card">No results</div>';
+    }
+
+    // Live Price
+    async function getPrice() {
+      const ticker = document.getElementById('priceInput').value.toUpperCase();
+      const res    = await fetch(`/price/${ticker}`);
+      const data   = await res.json();
+      document.getElementById('priceResult').innerHTML =
+        data.price
+          ? `<div class="card">💰 ${data.ticker}: <strong>$${data.price}</strong></div>`
+          : `<div class="card sell">Error: ${data.error}</div>`;
+    }
+
+    // Add to portfolio
+    async function addStock() {
+      const ticker      = document.getElementById('tickerInput').value.toUpperCase();
+      const quantity    = +document.getElementById('qtyInput').value;
+      const avgBuyPrice = +document.getElementById('priceAdd').value;
+      const res  = await fetch('/portfolio/add', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ ticker, quantity, avgBuyPrice }),
+      });
+      const data = await res.json();
+      showPortfolio(data.portfolio);
+    }
+
+    // Show portfolio
+    function showPortfolio(portfolio) {
+      document.getElementById('portfolioResult').innerHTML =
+        portfolio.map(h =>
+          `<div class="card">
+            <strong>${h.ticker}</strong> —
+            ${h.quantity} shares at $${h.avgBuyPrice} avg
+          </div>`
+        ).join('');
+    }
+
+    // Load portfolio on page open
+    fetch('/portfolio').then(r => r.json()).then(showPortfolio);
+  </script>
+
+</body>
+</html>
