@@ -10,11 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/**
- * Send a price alert email.
- * @param {string} to        - recipient email
- * @param {Object} alertData - { ticker, condition, threshold, currentPrice }
- */
+
 async function sendAlertEmail(to, alertData) {
   const { ticker, condition, threshold, currentPrice } = alertData;
   const direction = condition === 'ABOVE' ? 'risen above' : 'fallen below';
@@ -60,7 +56,6 @@ async function sendAlertEmail(to, alertData) {
     logger.info(`Alert email sent to ${to} for ${ticker}`);
   } catch (err) {
     logger.error(`Failed to send alert email: ${err.message}`);
-    // Don't throw — alert checking should continue even if email fails
   }
 }
 
